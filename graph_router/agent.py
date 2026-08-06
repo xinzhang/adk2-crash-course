@@ -13,13 +13,18 @@ handler, never skip steps..." into one big instruction prompt and hoped the
 model followed it.
 """
 
+import os
+
 from google.adk.agents import Agent
 from google.adk.agents import Context
+from google.adk.models.lite_llm import LiteLlm
 from google.adk.workflow import START
 from google.adk.workflow import Workflow
 from google.adk.workflow import node
 
-MODEL = "gemini-2.5-flash"
+from key_check import log_api_key
+
+MODEL = LiteLlm(model="openai/" + os.environ.get("MODEL", "gpt-4o"))
 
 CATEGORIES = ("BUG", "BILLING", "FEATURE")
 
@@ -27,6 +32,7 @@ CATEGORIES = ("BUG", "BILLING", "FEATURE")
 
 classifier = Agent(
     model=MODEL,
+    before_model_callback=log_api_key,
     name="classifier",
     description="Classifies incoming customer support messages.",
     instruction="""You are the intake classifier for a software company's

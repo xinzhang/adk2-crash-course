@@ -17,9 +17,14 @@ back, and often didn't. In 2.x the mode makes the handoff contract explicit:
 ADK wraps the sub-agent as a tool and returns control automatically.
 """
 
-from google.adk.agents import Agent
+import os
 
-MODEL = "gemini-2.5-flash"
+from google.adk.agents import Agent
+from google.adk.models.lite_llm import LiteLlm
+
+from key_check import log_api_key
+
+MODEL = LiteLlm(model="openai/" + os.environ.get("MODEL", "gpt-4o"))
 
 # --- Mock tools (stand-ins for real APIs) ---------------------------------
 
@@ -67,6 +72,7 @@ def book_flight(origin: str, destination: str, date: str) -> dict:
 
 weather_checker = Agent(
     model=MODEL,
+    before_model_callback=log_api_key,
     name="weather_checker",
     mode="single_turn",
     description="Checks the current weather for a given city.",
@@ -81,6 +87,7 @@ weather_checker = Agent(
 
 flight_booker = Agent(
     model=MODEL,
+    before_model_callback=log_api_key,
     name="flight_booker",
     mode="task",
     description="Books flights between two cities.",
@@ -97,6 +104,7 @@ flight_booker = Agent(
 
 root_agent = Agent(
     model=MODEL,
+    before_model_callback=log_api_key,
     name="travel_planner",
     description="Travel planning coordinator.",
     instruction=(

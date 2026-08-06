@@ -21,17 +21,22 @@ Wrapped in an App with ResumabilityConfig so the pause/resume is durable and
 checkpointed.
 """
 
+import os
+
 from google.adk.agents import Agent
 from google.adk.agents import Context
 from google.adk.apps import App
 from google.adk.apps import ResumabilityConfig
 from google.adk.events.request_input import RequestInput
+from google.adk.models.lite_llm import LiteLlm
 from google.adk.workflow import START
 from google.adk.workflow import Workflow
 from google.adk.workflow import node
 from pydantic import BaseModel
 
-MODEL = "gemini-2.5-flash"
+from key_check import log_api_key
+
+MODEL = LiteLlm(model="openai/" + os.environ.get("MODEL", "gpt-4o"))
 
 AUTO_APPROVE_LIMIT = 100.00
 APPROVAL_INTERRUPT_ID = "manager-approval"
@@ -47,6 +52,7 @@ class RefundRequest(BaseModel):
 
 intake = Agent(
     model=MODEL,
+    before_model_callback=log_api_key,
     name="intake",
     description="Extracts a structured refund request from the user message.",
     instruction="""Extract the refund request from the user's message.

@@ -21,6 +21,9 @@ source .venv/bin/activate
 adk web                    # opens the dev UI; pick an agent in the dropdown
 ```
 
+For terminal-based runs (`adk run <folder>`) and per-agent notes, see
+[RUNBOOK.md](RUNBOOK.md).
+
 ## What to try in adk web
 
 **graph_router** — watch the Trace tab: classifier → router → handler, deterministically.
