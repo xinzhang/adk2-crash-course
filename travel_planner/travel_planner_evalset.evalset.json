@@ -1,0 +1,480 @@
+{
+  "eval_set_id": "travel_planner_evalset",
+  "name": "travel_planner_evalset",
+  "eval_cases": [
+    {
+      "eval_id": "weather_only",
+      "conversation": [
+        {
+          "invocation_id": "e-c1a49ae4-a005-40b9-bf07-718764d20409",
+          "user_content": {
+            "parts": [
+              {
+                "text": "What is the weather in Tokyo?"
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "The current weather in Tokyo is sunny, with a temperature of 24°C and a gentle breeze blowing at 8 kph."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "travel_planner",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "call_FpmDP0DGX0ogLvxBvwNvQt4V",
+                        "args": {
+                          "request": "current weather in Tokyo"
+                        },
+                        "name": "weather_checker"
+                      }
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "weather_checker",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "call_ENzDBjK1pBONtfDufHFvsASC",
+                        "args": {
+                          "city": "Tokyo"
+                        },
+                        "name": "get_weather"
+                      }
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "weather_checker",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "call_ENzDBjK1pBONtfDufHFvsASC",
+                        "name": "get_weather",
+                        "response": {
+                          "city": "Tokyo",
+                          "condition": "sunny",
+                          "temp_c": 24,
+                          "wind_kph": 8
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              },
+              {
+                "author": "weather_checker",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "The current weather in Tokyo is sunny, with a temperature of 24°C and a gentle breeze blowing at 8 kph."
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "travel_planner",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "call_FpmDP0DGX0ogLvxBvwNvQt4V",
+                        "name": "weather_checker",
+                        "response": {
+                          "result": "The current weather in Tokyo is sunny, with a temperature of 24°C and a gentle breeze blowing at 8 kph."
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1785982817.5121338
+        }
+      ],
+      "session_input": {
+        "app_name": "travel_planner",
+        "user_id": "eval_user_weather"
+      },
+      "creation_timestamp": 1785982844.836137
+    },
+    {
+      "eval_id": "flight_only",
+      "conversation": [
+        {
+          "invocation_id": "e-bab9068f-285d-4383-a31a-1de0585f4e07",
+          "user_content": {
+            "parts": [
+              {
+                "function_response": {
+                  "id": "call_IbBKNfXMgtiplpoIiebUfY28",
+                  "name": "flight_booker",
+                  "response": {
+                    "result": "Flight booked successfully from SFO to Paris on September 1, 2026. Confirmation code: AD2K88. Price: $642."
+                  }
+                }
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "Your flight from SFO to Paris on September 1, 2026, has been booked successfully. Your confirmation code is AD2K88 and the price is $642."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "travel_planner",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "call_IbBKNfXMgtiplpoIiebUfY28",
+                        "args": {
+                          "request": "Book a flight from SFO (San Francisco International Airport) to Paris on September 1, 2026."
+                        },
+                        "name": "flight_booker"
+                      }
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "flight_booker",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "call_ms0fYl6IqFJSgo4sYBCXFi60",
+                        "args": {
+                          "origin": "SFO",
+                          "destination": "Paris",
+                          "date": "2026-09-01"
+                        },
+                        "name": "book_flight"
+                      }
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "flight_booker",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "call_ms0fYl6IqFJSgo4sYBCXFi60",
+                        "name": "book_flight",
+                        "response": {
+                          "status": "confirmed",
+                          "confirmation_code": "AD2K88",
+                          "origin": "SFO",
+                          "destination": "Paris",
+                          "date": "2026-09-01",
+                          "airline": "Gemini Air",
+                          "price_usd": 642.0
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              },
+              {
+                "author": "flight_booker",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "call_ET4LZgvIv1PKh7kfCmN7IctA",
+                        "args": {
+                          "result": "Flight booked successfully from SFO to Paris on September 1, 2026. Confirmation code: AD2K88. Price: $642."
+                        },
+                        "name": "finish_task"
+                      }
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "flight_booker",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "call_ET4LZgvIv1PKh7kfCmN7IctA",
+                        "name": "finish_task",
+                        "response": {
+                          "result": "Task completed."
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1785982827.830635
+        }
+      ],
+      "session_input": {
+        "app_name": "travel_planner",
+        "user_id": "eval_user_flight"
+      },
+      "creation_timestamp": 1785982844.8472588
+    },
+    {
+      "eval_id": "weather_and_flight",
+      "conversation": [
+        {
+          "invocation_id": "e-86203aa4-1917-461c-860d-72f48bed634a",
+          "user_content": {
+            "parts": [
+              {
+                "function_response": {
+                  "id": "call_9fdjzz1trxZcJJ0b04J37ETk",
+                  "name": "flight_booker",
+                  "response": {
+                    "result": "Flight from SFO to Paris on 2026-09-01 has been successfully booked with Gemini Air. Confirmation code: AD2K88. Price: $642.00 USD."
+                  }
+                }
+              }
+            ],
+            "role": "user"
+          },
+          "final_response": {
+            "parts": [
+              {
+                "text": "The current weather in Paris is partly cloudy with a temperature of 18°C and a wind speed of 12 kph.\n\nAdditionally, your flight from San Francisco (SFO) to Paris on 2026-09-01 has been successfully booked with Gemini Air. Your confirmation code is AD2K88, and the price is $642.00 USD."
+              }
+            ],
+            "role": "model"
+          },
+          "intermediate_data": {
+            "invocation_events": [
+              {
+                "author": "travel_planner",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "call_IfaTl4PoIlApfZXC8lcTPmdU",
+                        "args": {
+                          "request": "Check the current weather in Paris."
+                        },
+                        "name": "weather_checker"
+                      }
+                    },
+                    {
+                      "function_call": {
+                        "id": "call_9fdjzz1trxZcJJ0b04J37ETk",
+                        "args": {
+                          "request": "Book a flight from San Francisco (SFO) to Paris on 2026-09-01."
+                        },
+                        "name": "flight_booker"
+                      }
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "flight_booker",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "call_hRMlkyt7JEhd8LUfuI3SSghu",
+                        "args": {
+                          "origin": "SFO",
+                          "destination": "Paris",
+                          "date": "2026-09-01"
+                        },
+                        "name": "book_flight"
+                      }
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "flight_booker",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "call_hRMlkyt7JEhd8LUfuI3SSghu",
+                        "name": "book_flight",
+                        "response": {
+                          "status": "confirmed",
+                          "confirmation_code": "AD2K88",
+                          "origin": "SFO",
+                          "destination": "Paris",
+                          "date": "2026-09-01",
+                          "airline": "Gemini Air",
+                          "price_usd": 642.0
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              },
+              {
+                "author": "flight_booker",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "call_t0ssVhun76iRGHDXv8MNLufV",
+                        "args": {
+                          "result": "Flight from SFO to Paris on 2026-09-01 has been successfully booked with Gemini Air. Confirmation code: AD2K88. Price: $642.00 USD."
+                        },
+                        "name": "finish_task"
+                      }
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "flight_booker",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "call_t0ssVhun76iRGHDXv8MNLufV",
+                        "name": "finish_task",
+                        "response": {
+                          "result": "Task completed."
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              },
+              {
+                "author": "travel_planner",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "call_x31WQMI6lFwbqbRRnjUtBprP",
+                        "args": {
+                          "request": "Check the current weather in Paris."
+                        },
+                        "name": "weather_checker"
+                      }
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "weather_checker",
+                "content": {
+                  "parts": [
+                    {
+                      "function_call": {
+                        "id": "call_L0KW4IXCy5LpXAGO8s8jg6Gk",
+                        "args": {
+                          "city": "Paris"
+                        },
+                        "name": "get_weather"
+                      }
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "weather_checker",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "call_L0KW4IXCy5LpXAGO8s8jg6Gk",
+                        "name": "get_weather",
+                        "response": {
+                          "city": "Paris",
+                          "condition": "partly cloudy",
+                          "temp_c": 18,
+                          "wind_kph": 12
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              },
+              {
+                "author": "weather_checker",
+                "content": {
+                  "parts": [
+                    {
+                      "text": "The current weather in Paris is partly cloudy with a temperature of 18°C and a wind speed of 12 kph."
+                    }
+                  ],
+                  "role": "model"
+                }
+              },
+              {
+                "author": "travel_planner",
+                "content": {
+                  "parts": [
+                    {
+                      "function_response": {
+                        "id": "call_x31WQMI6lFwbqbRRnjUtBprP",
+                        "name": "weather_checker",
+                        "response": {
+                          "result": "The current weather in Paris is partly cloudy with a temperature of 18°C and a wind speed of 12 kph."
+                        }
+                      }
+                    }
+                  ],
+                  "role": "user"
+                }
+              }
+            ]
+          },
+          "creation_timestamp": 1785982833.212665
+        }
+      ],
+      "session_input": {
+        "app_name": "travel_planner",
+        "user_id": "eval_user_both"
+      },
+      "creation_timestamp": 1785982844.856547
+    }
+  ],
+  "creation_timestamp": 1785982810.110688
+}
