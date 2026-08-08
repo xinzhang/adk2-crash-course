@@ -8,7 +8,7 @@ screen, verified against the real `google-adk` 2.5.0 APIs).
 |---|---|---|
 | [graph_router](graph_router/agent.py) | Graph-based workflows | `Workflow`, edges, `ctx.route` |
 | [travel_planner](travel_planner/agent.py) | Collaborative agent modes | `mode="single_turn"` / `mode="task"` |
-| [refund_approval](refund_approval/agent.py) | Dynamic workflows + human-in-the-loop | `@node`, `RequestInput`, `ctx.resume_inputs` |
+| [refund_approval](refund_approval/agent.py) | Dynamic workflows + human-in-the-loop | `@node`, `RequestInput`, `ctx.resume_inputs`, `ctx.run_node` |
 | [front_desk](front_desk/agent.py) | Nested workflows (composes the other three) | workflows & agent trees as graph nodes, `clone()` |
 
 ## Setup
@@ -106,9 +106,10 @@ workflow primitive:
 
 ```python
 @node(rerun_on_resume=True)
-def decide_and_process(ctx: Context, node_input: RefundRequest):
-    if node_input.amount <= 100:
-        return {...}                          # auto-approve: just an `if`
+def get_approval(ctx: Context, node_input: RefundRequest):
+    req = node_input
+    if req.amount <= 100:
+        return RefundDecision(approved=True, human_reviewed=False, ...)  # auto-approve: just an `if`
 
     answer = ctx.resume_inputs.get("manager-approval")
     if answer is None:
@@ -118,6 +119,17 @@ def decide_and_process(ctx: Context, node_input: RefundRequest):
             response_schema={"type": "string"},
         )
     ...                                       # RESUMED: answer is here
+
+
+@node
+def process_refund(ctx: Context, node_input: RefundDecision):
+    ...                                       # pure post-processing, no pause logic
+
+
+@node(rerun_on_resume=True)
+async def decide_and_process(ctx: Context, node_input: RefundRequest):
+    decision = await ctx.run_node(get_approval, node_input)
+    return await ctx.run_node(process_refund, decision)
 ```
 
 - Returning a `RequestInput` interrupts the workflow. In adk web it surfaces
@@ -125,7 +137,12 @@ def decide_and_process(ctx: Context, node_input: RefundRequest):
   function call.
 - `rerun_on_resume=True` means the node re-runs after the human answers —
   and this time `ctx.resume_inputs[interrupt_id]` contains the reply.
-  (The video calls this "resume data".)
+- The approval pause and the post-approval processing are separate `@node`
+  functions, wired together dynamically via `ctx.run_node(...)`. If a
+  dynamically-run child node returns `RequestInput`, the interrupt
+  propagates up and pauses the calling node too — so `decide_and_process`
+  also needs `rerun_on_resume=True`, and so does `get_approval` itself
+  (any node that can pause must be rerunnable).
 - The `App(..., resumability_config=ResumabilityConfig(is_resumable=True))`
   wrapper makes the pause durable: state is checkpointed in the session, so
   the workflow can resume even across restarts (with a persistent session

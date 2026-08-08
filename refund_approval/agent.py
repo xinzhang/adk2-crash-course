@@ -3,19 +3,30 @@
 A refund-processing workflow with a business rule enforced in code:
 
     START -> intake (LLM extracts the request) -> decide_and_process (@node)
+                                                        |
+                                                        |-- ctx.run_node(get_approval, req)
+                                                        |-- ctx.run_node(process_refund, decision)
 
 - Refunds of $100 or less are auto-approved.
 - Refunds over $100 PAUSE the workflow (RequestInput) and wait for a human
   manager to approve. When the human answers, the workflow resumes exactly
   where it left off and reads the answer from ctx.resume_inputs.
 
-The three primitives from the video:
+The approval step (business rule + HITL pause) and the processing step are
+separate @node functions, wired together dynamically via ctx.run_node() from
+a thin orchestrator node. This keeps each node single-purpose and lets
+process_refund be reused/tested independently of the approval flow.
+
+The primitives:
   1. @node            — turns a plain Python function into a workflow step,
                         so the business rule is a real `if`, not a prompt.
   2. RequestInput     — returned from a node, it interrupts the workflow and
                         shows a message to the user.
   3. ctx.resume_inputs — on resume, the human's answer is here, keyed by the
-                        interrupt id. (The video calls this "resume data".)
+                        interrupt id.
+  4. ctx.run_node     — dynamically runs another node and awaits its result;
+                        an interrupt (RequestInput) in the child propagates
+                        up and pauses the caller too.
 
 Wrapped in an App with ResumabilityConfig so the pause/resume is durable and
 checkpointed.
@@ -46,6 +57,14 @@ class RefundRequest(BaseModel):
     customer_id: str
     amount: float
     reason: str
+
+
+class RefundDecision(BaseModel):
+    customer_id: str
+    amount: float
+    reason: str
+    approved: bool
+    human_reviewed: bool
 
 
 # --- Step 1: LLM extracts a structured refund request ---------------------
@@ -87,22 +106,19 @@ def _is_approval(text: str) -> bool:
 
 
 @node(rerun_on_resume=True)
-def decide_and_process(ctx: Context, node_input: RefundRequest) -> dict:
+def get_approval(
+    ctx: Context, node_input: RefundRequest
+) -> RefundDecision | RequestInput:
     """Applies the refund policy; pauses for a manager above the limit."""
     req = node_input
-
     if req.amount <= AUTO_APPROVE_LIMIT:
-        return {
-            "decision": "auto_approved",
-            "customer_id": req.customer_id,
-            "amount": req.amount,
-            "reason": req.reason,
-            "detail": (
-                f"Refund of ${req.amount:.2f} is within the "
-                f"${AUTO_APPROVE_LIMIT:.0f} auto-approval limit. "
-                "Processed successfully."
-            ),
-        }
+        return RefundDecision(
+            customer_id=req.customer_id,
+            amount=req.amount,
+            reason=req.reason,
+            approved=True,
+            human_reviewed=False,
+        )
 
     # Over the limit: has the manager already answered?
     answer = ctx.resume_inputs.get(APPROVAL_INTERRUPT_ID)
@@ -121,19 +137,62 @@ def decide_and_process(ctx: Context, node_input: RefundRequest) -> dict:
         )
 
     # Yes — the workflow resumed with the human's answer.
-    approved = _is_approval(_answer_text(answer))
+    return RefundDecision(
+        customer_id=req.customer_id,
+        amount=req.amount,
+        reason=req.reason,
+        approved=_is_approval(_answer_text(answer)),
+        human_reviewed=True,
+    )
+
+
+@node
+def process_refund(ctx: Context, node_input: RefundDecision) -> dict:
+    """Finalizes the refund given an approval decision."""
+    decision = node_input
+    if not decision.approved:
+        detail = (
+            "Denied by human reviewer."
+            if decision.human_reviewed
+            else "Refund denied."
+        )
+        return {
+            "decision": "rejected",
+            "approved_by_human": decision.human_reviewed,
+            "customer_id": decision.customer_id,
+            "amount": decision.amount,
+            "reason": decision.reason,
+            "detail": detail,
+        }
+
+    detail = (
+        f"Refund of ${decision.amount:.2f} was APPROVED by a manager. "
+        "Processed successfully."
+        if decision.human_reviewed
+        else (
+            f"Refund of ${decision.amount:.2f} is within the "
+            f"${AUTO_APPROVE_LIMIT:.0f} auto-approval limit. "
+            "Processed successfully."
+        )
+    )
     return {
-        "decision": "approved" if approved else "rejected",
-        "approved_by_human": True,
-        "customer_id": req.customer_id,
-        "amount": req.amount,
-        "reason": req.reason,
-        "detail": (
-            f"Refund of ${req.amount:.2f} was "
-            f"{'APPROVED' if approved else 'REJECTED'} by a manager. "
-            + ("Processed successfully." if approved else "No refund issued.")
-        ),
+        "decision": "approved" if decision.human_reviewed else "auto_approved",
+        "approved_by_human": decision.human_reviewed,
+        "customer_id": decision.customer_id,
+        "amount": decision.amount,
+        "reason": decision.reason,
+        "detail": detail,
     }
+
+
+@node(rerun_on_resume=True)
+async def decide_and_process(ctx: Context, node_input: RefundRequest) -> dict:
+    """Orchestrates the approval and processing nodes."""
+    decision = await ctx.run_node(get_approval, node_input)
+
+    # Process
+    result = await ctx.run_node(process_refund, decision)
+    return result
 
 
 # --- The workflow, made durable/resumable via the App wrapper -------------
