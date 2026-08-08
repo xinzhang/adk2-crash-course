@@ -71,11 +71,13 @@ Otherwise respond with ONLY the department word in uppercase.""",
 
 @node
 def front_desk_router(ctx: Context, node_input: str) -> str:
+    # Exact match, not substring containment: the classifier's greeting
+    # reply lists all three department names in prose, so `dept in text`
+    # would misroute a plain "hi" to whichever department is checked first.
     text = str(node_input).strip().upper()
-    for dept in DEPARTMENTS:
-        if dept in text:
-            ctx.route = dept
-            return f"routed to {dept}"
+    if text in DEPARTMENTS:
+        ctx.route = text
+        return f"routed to {text}"
     return "no department detected — nothing to route"
 
 

@@ -58,11 +58,13 @@ No punctuation, no explanation.""",
 @node
 def router(ctx: Context, node_input: str) -> str:
     """Reads the classifier's output and emits a route for the graph edges."""
+    # Exact match, not substring containment: a greeting reply like "I can
+    # classify bug reports, billing questions, or feature requests" contains
+    # all three category words, so `category in text` would misroute it.
     text = str(node_input).strip().upper()
-    for category in CATEGORIES:
-        if category in text:
-            ctx.route = category
-            return f"routed to {category}"
+    if text in CATEGORIES:
+        ctx.route = text
+        return f"routed to {text}"
     # Conversational message (e.g. a greeting): no route matches, the branch
     # ends here and the classifier's reply is what the user sees.
     return "no support category detected — nothing to route"
