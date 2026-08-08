@@ -70,6 +70,15 @@ Otherwise respond with ONLY the department word in uppercase.""",
 
 
 @node
+def capture_query(ctx: Context, node_input: str) -> str:
+    """Stashes the raw user message before the classifier's own output
+    overwrites node_input — front_desk_router needs the original text, not
+    its own routing decision, to hand to whichever department fires next."""
+    ctx.state["original_query"] = node_input
+    return node_input
+
+
+@node
 def front_desk_router(ctx: Context, node_input: str) -> str:
     # Exact match, not substring containment: the classifier's greeting
     # reply lists all three department names in prose, so `dept in text`
@@ -77,7 +86,11 @@ def front_desk_router(ctx: Context, node_input: str) -> str:
     text = str(node_input).strip().upper()
     if text in DEPARTMENTS:
         ctx.route = text
-        return f"routed to {text}"
+        # Forward the ORIGINAL user message, not this routing decision —
+        # downstream departments (travel_team, graph_router's classifier,
+        # refund_approval's intake) need real content to act on, not a
+        # diagnostic string like "routed to TRAVEL".
+        return ctx.state.get("original_query", node_input)
     return "no department detected — nothing to route"
 
 
@@ -88,6 +101,7 @@ workflow = Workflow(
     edges=[
         (
             START,
+            capture_query,
             front_desk_classifier,
             front_desk_router,
             {
